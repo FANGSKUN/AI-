@@ -31,7 +31,7 @@
 | 2026-09-22 | Day 4 | KNN（上）：原理 + 向量化距离 + 投票分类 | 1.5h | 已完成 | 自检 3/3；做了手写数字交互测试工具 |
 | 2026-09-22 | Day 5 | KNN（下）：评估调参 + Git 入门 | 1.5h | 已完成 | 与 Day 4 同日完成，进度提前；Git 首次提交 3629a00 |
 | 2026-09-23 | Day 6 | PyTorch 入门：张量 + 自动求导 + 重写线性回归 | 2h | 已完成 | 自检 4/4；进入 Phase 2 |
-| 待补 | Day 7 | nn/optim/DataLoader：工程化训练循环 | 待补 | 已完成 | 自检 4/4 + 批量版 4/4；Day06/07 提交 Git |
+| 2026-10-06 | Day 7 | nn/optim/DataLoader：工程化训练循环 | 约 2h | 已完成 | 自检 4/4 + 批量版 4/4；Day06/07 提交 Git |
 
 ---
 
@@ -122,7 +122,7 @@
 
 **Day 6 验收**：理解 autograd 怎么自动算梯度；能用 PyTorch 训练线性回归。
 
-### Day 7（日期待补）
+### Day 7（2026-10-06）
 
 **目标**：用 nn / optim / DataLoader 把训练循环工程化，告别手写参数与手推梯度
 
@@ -132,7 +132,7 @@
 | 2 | 项目 A：用 `nn.Linear` + `nn.MSELoss` + `optim.SGD` 重构线性回归，补全 TODO | 50min | [x] |
 | 3 | 项目 B：加 `TensorDataset` + `DataLoader` 分批喂数据，写内层 for 循环 | 30min | [x] |
 | 4 | 跑 `Day07_自检.py` 与 `Day07_批量_自检.py` 确认通过 | 10min | [x] 4/4 + 4/4 |
-| 5 | 写今日汇报 | 10min | [ ] |
+| 5 | 写今日汇报 | 10min | [x] |
 
 **Day 7 验收**：能说清 `optimizer` 替代了 Day 6 的手动更新；会用 DataLoader 分批训练。
 
@@ -354,6 +354,40 @@
 
 **下一步**
 - Day 7：nn / optim / DataLoader，工程化训练循环
+
+### Day 7（2026-10-06）
+
+**主题**：nn / optim / DataLoader——把训练循环工程化
+
+**完成情况**
+
+| 任务 | 结果 |
+|------|------|
+| 理解标准 4 步训练循环 | ✅ |
+| 用 `nn.Linear` + `nn.MSELoss` + `optim.SGD` 重构线性回归 | ✅ |
+| DataLoader 分批版 | ✅ |
+| 自检（nn+optim 版 + 批量版） | ✅ 4/4 + 4/4 |
+
+**关键结果**
+- `nn.Linear(1,1)` 自动建好参数 w、b；`optim.SGD(model.parameters(), lr)` 接管所有参数的更新
+- 标准 4 步训练循环：`zero_grad()` → forward/loss → `backward()` → `step()`
+- 批量版：`TensorDataset(X, y)` 打包 → `DataLoader(dataset, batch_size=32, shuffle=True)` → 内层 for 一批批喂
+- 训练收敛 w≈3、b≈2（真实 3、2），两个自检均 4/4
+
+**对比 Day 6**
+- Day 6：手建 `w`、`b`，手动 `backward`、`with no_grad` 更新、手动 `zero_`
+- Day 7：`optimizer.step()` 内部已 `no_grad`，`zero_grad()` 一次清全部参数，代码更短、更不易漏
+
+**踩的坑 / 待改进**
+- `Day07_批量.py` 内层 for 的循环体缩进不统一（比标准多缩进了几格），能跑但不符合 PEP 8，下次注意统一 4 空格
+- 记录 epoch 平均 loss 用 `loss.item() * len(xb)` 加权是正确的，可再想想"最后一个 batch 不整除"时权重是否仍准确
+
+**进步**
+- 从"手写每个参数"过渡到"交给框架管理"，训练循环达到标准形态
+- DataLoader 分批为后续大数据集训练打下基础
+
+**下一步**
+- Day 8：逻辑回归（二分类），引入 sigmoid + BCE 损失 + 准确率评估
 
 ---
 
