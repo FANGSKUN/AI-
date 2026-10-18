@@ -44,7 +44,6 @@ def split(X, y, train_ratio=0.25, seed=7):
     idx = torch.randperm(n)          # 0..n-1 的随机排列
     k = int(n * train_ratio)         # 训练集大小
     return X[idx[:k]], y[idx[:k]], X[idx[k:]], y[idx[k:]]
-    return X_tr, y_tr, X_va, y_va
 
 
 # ============ 3. 预测与评估（复习）============
