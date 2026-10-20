@@ -745,8 +745,11 @@
 - 第一次碰真实数据集，完成「假数据验证算法 → 真数据学真实规律」的认知升级
 - 主动把整条链路问到根：数据怎么加载 → 预处理 → 展平 → softmax → argmax
 
-**还模糊的（待追问）**
-- 后半部分 `evaluate` / `train_epoch` 的细节，用户后续再问
+**后续追问已澄清（train/evaluate 骨架 + 收尾）**
+- **train_epoch = Day 7 的 4 步循环（zero_grad → forward/loss → backward → step）套进 for 循环**（每批 64 张走一遍）
+- **统计器三行**：`total_loss += loss.item()*len(y)`（平均×数量=总损失）、`correct += (argmax==y).sum().item()`（数对的个数）、`n += len(y)`（数张数）；最后「总÷总」算平均，规避最后一批不满 64 张的坑
+- **model.train()/eval()**：翻一个 `training` 开关，只有 Dropout/BatchNorm 这类层在乎它；对 MLP 无影响，但对 CNN 至关重要（养成「训练前 train、评估前 eval」习惯）
+- **关于手写**：结论——不必闭卷默写，能「看着代码讲清每行在干嘛」即算会写；科研靠「读懂 + 能改」而非默写
 
 **下一步**
 - Day 14：进入 Phase 3 计算机视觉（CNN 卷积神经网络）
