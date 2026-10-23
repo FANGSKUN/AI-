@@ -71,6 +71,7 @@
 | 2026-10-22 | Day 17 | 目标检测 / 语义分割（预训练模型入门，Phase 3 收官） | 2h | 已完成 | 4 TODO 全对；Faster R-CNN 检出马(1.00)+LRASPP 分割；逐行拆代码打通 batch/argmax/张量索引 |
 | 2026-10-22 | Day 18 | 3D 视觉开场——点云入门（Phase 4 起航） | 约 1h | 已完成 | 3 TODO 全对 + 自检 5/5；球面点云生成/质心/3D 可视化；ViT 顺延 Phase 5 |
 | 2026-10-23 | Day 19 | PointNet 入门（对称函数解决点云无序性，Phase 4 核心） | 约 2h | 已完成 | 3 TODO 全对 + 自检 4/4；训练区分球 vs 立方体 acc=1.0；深挖 nn.Module/forward/ReLU 到根 |
+| 2026-10-23 | Day 20 | PointNet 分割（每点分类 + 跳跃连接，Phase 4 继续） | 约 2h | 已完成 | 3 TODO 全对 + 自检 4/4；哑铃点云逐点分类 acc=0.97；深挖 stack/cat/self/forward/eval |
 
 ---
 
@@ -991,6 +992,41 @@
 
 **下一步**
 - Day 20：点云分割（每点分类，PointNet 分割分支 / 跳跃连接）或 相机几何 / SLAM 入门（Phase 4 继续）
+
+---
+
+## Day 20（2026-10-23）· PointNet 分割——每点分类 + 跳跃连接（Phase 4 继续）
+
+**今日成果**
+- 3 个 TODO 全对 + 自检 4/4：
+  - TODO1 哑铃点云生成（两个球平移 ±d 拼接 + 每点标签 `[0]*n0+[1]*n1`）
+  - TODO2 max pooling（`feat.max(dim=1)`）
+  - TODO3 跳跃连接（`unsqueeze(1).expand(B,N,256)` + `cat(dim=-1)`）
+- 自检新增「等变性」检查：打乱点顺序后**预测跟着点走**（分割 ≠ 分类的"不变性"）
+- 训练：哑铃点云（两球心 ±0.6）逐点分类，40 轮 acc=0.97（二次边界约 30 轮「顿悟」跳变）
+- 可视化：`可视化图/Day20_分割.png`（真实 vs 预测标签 3D 对比）
+
+**核心概念（问到根）**
+- **分割 vs 分类**：分类=整块一个标签 (B,C)；分割=每点一个标签 (B,N,C)；max 压掉点维丢了"哪个点在哪"，分割必须保留每点信息
+- **跳跃连接**：全局特征(256) 复制 N 份拼回每点特征(128) → 384；每个点拿到"自己的局部 + 共享的全局"
+- **拼出的 384 不纯是每点特征**：前 128=自己的、后 256=共享的；`cat` 是"拼"不是"混"，每点 128 原样保留
+- **全局特征的意义 = 上下文**：消解局部歧义（「如/好」左半边、「椅背/椅腿」）；诚实指出：哑铃任务里全局非严格必需，真实零件/语义分割才必需
+- **「顿悟」式收敛**：模型不是平滑进步，约 30 轮突然跳变（学到二次边界 x²+y²+z²）
+
+**深挖补充（numpy/torch 拼接、Python 类、逐行拆代码）**
+- `np.stack` 默认 axis=0（新轴插最前）；Day18 用 axis=1（插中间）才需显式写
+- **stack vs cat**：cat 沿已有维"粘"（维度不变），stack 沿新维"摞"（维度+1）；numpy 里 cat 叫 `concatenate`、torch 里叫 `cat`
+- **造数据用 numpy、模型用 torch**：造数据不需 GPU/梯度，numpy 轻量通用；torch 两大绝活（GPU 加速+自动求导）造数据用不上；`torch.tensor(X)` 一行转 torch
+- **列表 + vs numpy/torch +**：列表 `+`=拼接（`[0]*n0+[1]*n1`），numpy/torch `+`=逐元素相加；看两边类型判断
+- 球面坐标 x/y/z 都是 (n,)：逐元素运算 + 标量广播 + 向量化（无 for 循环）
+- **为什么用类定义模型**：模型有状态（参数），函数无状态装不下；继承 nn.Module 白送 parameters/to/train/eval/自动 forward；用 class 而非 Sequential 因 max/cat 是非层操作
+- `self` = 当前实例（C++ 的 this），Python 自动传第一个参数，`self.mlp` 是挂属性，Python 显式（C++ 隐式）
+- `forward` **必须叫 forward**（nn.Module 硬约定）：`model(x)` → `__call__` → `self.forward(x)`，改名报错
+- `reshape(-1,2)` 的 `-1`=自动推断那维（元素总数守恒），把 (n_each,N,2) 摊平成 (n_each*N,2) 凑 CE 标准格式
+- `model.eval()`：今天无用（无 Dropout/BN），但预防性习惯（将来 Transformer 满屏 Dropout/LayerNorm，忘 eval 会悄悄出错）；eval 是让 Dropout 失活神经元**恢复运作**（方向别反）
+
+**下一步**
+- Day 21：相机几何（针孔相机模型 / 投影 / 内参外参）—— SLAM 与 3D 视觉的地基（Phase 4 继续）
 
 ---
 
