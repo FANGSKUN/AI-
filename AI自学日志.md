@@ -78,6 +78,7 @@
 | 2026-10-27 | Day 24 | 对极几何——本质矩阵 E / 对极约束（Phase 4 继续，SLAM 定位地基） | 约 2h | 已完成 | 3 TODO 全对 + 自检 3/3；对极约束 x̂2ᵀE x̂1=0 验证；极线可视化；深挖共面/混合积/t 定义/归一化消深度/三大用法 |
 | 2026-10-27 | Day 25 | 八点法 + RANSAC（从匹配点反解相机运动，Phase 4 继续，SLAM 定位核心） | 约 2h | 已完成 | 6 空白全对 + 自检 3/3；八点法解 E（残差 3e-16）+ SVD 分解 4 候选 + 三角化验证还原 R/t；深挖零空间/尺度/9点为何无效/RANSAC |
 | 2026-10-28 | Day 26 | 两视角重建 3D 点云（SfM 简化版项目实战，Phase 4 继续，从 0 组装端到端） | 约 3h | 已完成 | 无 TODO 从 0 写完整 SfM 流程；重建误差 0.0；R 精确还原 + t 只方向（尺度 √2）；3 个 bug 自 debug；深挖 decompose_E 数学/深度/最小二乘/solve |
+| 2026-10-28 | Day 27 | PnP（已知 3D 点 + 2D 投影反求相机位姿，Phase 4 继续，SLAM 定位核心） | 约 3h | 已完成 | 6 TODO 完成 + 5 bug 自 debug；DLT 法反解 R/t 误差全 0.0；深挖 P=μ[R\|t] 尺度/奇异值定 μ/PnP vs 三角化闭环 |
 
 ---
 
@@ -1221,6 +1222,35 @@
 
 **下一步**
 - Day 27：PnP（已知 3D 点 + 2D 投影求位姿，3D-2D 对应），然后进 NeRF / 3D Gaussian Splatting 前沿（对齐 Dan Xu、Yinghao Xu 方向）
+
+---
+
+## Day 27（2026-10-28）· PnP——已知 3D 点 + 2D 投影反求相机位姿（Phase 4 继续，SLAM 定位核心）
+
+**今日成果**
+- 6 个 TODO 全部完成（make_points / project / normalize / build_A / solve_P / decompose_P）
+- DLT 法反解位姿，误差全 0.0：R 误差 0、t 误差 0、光心 C 误差 0、平均重投影误差 0 像素
+- 可视化：`可视化图/Day27_PnP.png`（立方体 + 真实相机 vs 反解相机，完全重合）
+- 自己 debug 了 5 个坑：
+  ① make_points 索引 `pow(4,i)` 应为 `4*i`，`pts[9]` 越界应为 `pts[8]`
+  ② project 行列搞反（`X[:,2]` 应为 `X[2]`：行=坐标轴、列=点）
+  ③ normalize 拼 ones 用 `hstack`（`np.stack([uv,1])` 形状错）
+  ④ build_A 的 `np.stack` 参数传错（两个数组要包成一个 list）
+  ⑤ decompose_P 误抄八点法 decompose_E（本质矩阵 3×3 vs 投影矩阵 3×4，拆法完全不同）
+
+**核心概念（问到根）**
+- PnP = 三角化的镜像：三角化（位姿 + 2D → 3D 点，建图），PnP（3D 点 + 2D → 位姿，定位），两者交替 = SLAM 闭环
+- DLT 核心：`x̂ × P X̃ = 0`（光心/3D 点/投影点共线 → 叉积为零），展开成 `A p = 0` → SVD 零空间
+- P 是投影矩阵 = [R|t]（normalize 已除掉 K，所以 P 只剩外参）
+
+**深挖补充**
+- 解出的 P 是 `μ·[R|t]` 不是 `[R|t]`：`A p = 0` 齐次，零空间解是单位范数，尺度被规范化掉
+- 为什么奇异值 S 决定 μ：旋转矩阵保长（奇异值全 1），`M = μR` 的奇异值全 = |μ|，取 `S.mean()` 稳健
+- 负尺度：`det(R) < 0` 说明 μ < 0（SVD 零空间方向不确定），须翻正——这次数据真的撞上了
+- PnP 的意义：定位「我在哪」——扫地机重定位 / AR 追踪 / 机器人抓取的底层能力
+
+**下一步**
+- Day 28：NeRF / 3D Gaussian Splatting 前沿（对齐 Dan Xu、Yinghao Xu 方向）
 
 ---
 
