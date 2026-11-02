@@ -27,7 +27,7 @@ def make_target(H=64, W=64, a=0.6, b=0.15):
     return xy, target
 
 # ================= 第 2 步：椭圆高斯参数（6 个旋钮）=================
-K = 48                                                               # 48 个椭圆高斯
+K = 40                                                               # 40 个椭圆高斯（K=48 有 4 个透明冗余，40 更紧凑）
 means = (torch.rand(K, 2) - 0.5).requires_grad_(True)               # means: (K,2) 位置
 log_sigma_x = torch.full((K,), np.log(0.15)).requires_grad_(True)   # log_sigma_x: (K,) x 轴大小
 log_sigma_y = torch.full((K,), np.log(0.15)).requires_grad_(True)   # log_sigma_y: (K,) y 轴大小
