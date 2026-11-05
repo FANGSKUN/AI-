@@ -39,7 +39,7 @@
 - **验收**：能说清机器人怎么从图像重建 / 理解 3D 世界（收官总结见文末 Phase 4 章节）
 
 ### Phase 5 · 具身智能 + 机器人（冲刺方向，对齐目标导师）▶ 进行中（Day 39 起航）
-- [x] Transformer / Self-Attention 地基 ✅ Day 39–41（自注意力 + QKV 投影 + 多头注意力）
+- [x] Transformer / Self-Attention 地基 ✅ Day 39–42（自注意力 + QKV 投影 + 多头注意力 + 位置编码）
 - [ ] ViT（视觉 Transformer）—— 感知这条腿
 - [ ] 世界模型（World Model）—— 呼应 Day 13 读的那篇具身智能综述
 - [ ] 强化学习 / 模仿学习 / 机器人学习
@@ -95,6 +95,7 @@
 | 2026-11-04 | Day 39 | Transformer 入门——Self-Attention（自注意力） | 约 2h | 已完成 | 3 TODO 全对+1 笔误；手写注意力三步（内积→softmax→加权）；精读 Attention Is All You Need（李沐）；深挖内积=相关性/Gram 矩阵/正交/残差连接 |
 | 2026-11-05 | Day 40 | QKV 线性投影——Self-Attention 完整形态 | 约 2h | 已完成 | 3 TODO 全对；Q/K/V 三投影 + 查字典类比；W_k 置换展示投影重定义相关性（猫鸟互换/鱼不变） |
 | 2026-11-05 | Day 41 | Multi-Head Attention（多头注意力） | 约 2h | 已完成 | 3 TODO 全对；2 头并行 + 拼接 + W_o；深挖真实多头三升级（降维不增参/W_o 可学习/头自动分化）；softmax 软性 + 重复叠加 |
+| 2026-11-05 | Day 42 | 位置编码（Positional Encoding） | 约 1.5h | 已完成 | 3 TODO 全对（1 处索引笔误 X_pe[1]→X_pe[2]）；正弦余弦编码；X'=X+PE 让同一词不同位置有不同身份；深挖 sin/cos 三优点 |
 
 ---
 
@@ -1648,6 +1649,28 @@
 
 **下一步**
 - Day 42：ViT（视觉 Transformer）——把图像切成 patch 当「词」，补上感知这条腿；或先收拢 Transformer 地基（位置编码 / 残差 / LayerNorm 补齐）
+
+---
+
+## Day 42（2026-11-05）· 位置编码（Positional Encoding）
+
+**今日成果**
+- 手写正弦余弦位置编码 PE，加到 embedding 上：X' = X + PE
+- 3 TODO 全对（位置编码函数 / X+PE / 验证区分），1 处索引笔误（X_pe[1] 应改 X_pe[2]）自行修正
+- 场景「猫 追 猫」：加 PE 前两个「猫」表示相同，加 PE 后主语猫 [1,1,0,1] vs 宾语猫 [1.91,-0.42,0.02,1] 明显区分
+
+**核心概念（问到根）**
+- Self-Attention 只依赖内容、无视顺序（scores=X@X^T 只看 embedding），分不清「谁追谁」
+- 位置编码 = 给每个 token 叠加「在第几个位置」的信息，X' = X + PE（内容 + 顺序）
+- 正弦余弦编码：偶数维 sin(pos/10000^(i/d))、奇数维 cos(pos/10000^((i-1)/d))，不同维不同频率
+
+**深挖补充**
+- sin/cos 三优点：① 每位置编码唯一（像指纹）② 相对位置可用和差公式线性算出 ③ 确定性函数能外推到训练没见过的更长序列
+- 位置 0 的 PE 恰好在 ±1（sin0=0、cos0=1），位置 2 则是 sin2≈0.91、cos2≈-0.42 的中间值，把同一词推向不同方向
+- 除了 sin/cos，GPT 等也用「可学习位置嵌入」，各有取舍
+
+**下一步**
+- Day 43：ViT（视觉 Transformer）——把图像切成 patch 当「词」，补上感知这条腿
 
 ---
 
