@@ -39,7 +39,7 @@
 - **验收**：能说清机器人怎么从图像重建 / 理解 3D 世界（收官总结见文末 Phase 4 章节）
 
 ### Phase 5 · 具身智能 + 机器人（冲刺方向，对齐目标导师）▶ 进行中（Day 39 起航）
-- [x] Transformer / Self-Attention 地基 ✅ Day 39–42（自注意力 + QKV 投影 + 多头注意力 + 位置编码）
+- [x] Transformer 地基 ✅ Day 39–43（自注意力 + QKV 投影 + 多头注意力 + 位置编码 + FFN + LayerNorm）—— 完整 Transformer 块通关
 - [ ] ViT（视觉 Transformer）—— 感知这条腿
 - [ ] 世界模型（World Model）—— 呼应 Day 13 读的那篇具身智能综述
 - [ ] 强化学习 / 模仿学习 / 机器人学习
@@ -96,6 +96,7 @@
 | 2026-11-05 | Day 40 | QKV 线性投影——Self-Attention 完整形态 | 约 2h | 已完成 | 3 TODO 全对；Q/K/V 三投影 + 查字典类比；W_k 置换展示投影重定义相关性（猫鸟互换/鱼不变） |
 | 2026-11-05 | Day 41 | Multi-Head Attention（多头注意力） | 约 2h | 已完成 | 3 TODO 全对；2 头并行 + 拼接 + W_o；深挖真实多头三升级（降维不增参/W_o 可学习/头自动分化）；softmax 软性 + 重复叠加 |
 | 2026-11-05 | Day 42 | 位置编码（Positional Encoding） | 约 1.5h | 已完成 | 3 TODO 全对（1 处索引笔误 X_pe[1]→X_pe[2]）；正弦余弦编码；X'=X+PE 让同一词不同位置有不同身份；深挖 sin/cos 三优点 |
+| 2026-11-06 | Day 43 | FFN（前馈 MLP）+ LayerNorm（层归一化）——完整 Transformer 块 | 约 2h | 已完成 | 3 TODO 全对；手写 LN+FFN 组装完整块；深挖 LN vs BN、残差保护梯度机制（dy/dx=1+F' vs dy/dW=dF/dW） |
 
 ---
 
@@ -1671,6 +1672,29 @@
 
 **下一步**
 - Day 43：ViT（视觉 Transformer）——把图像切成 patch 当「词」，补上感知这条腿
+
+---
+
+## Day 43（2026-11-06）· FFN（前馈 MLP）+ LayerNorm（层归一化）—— 完整 Transformer 块
+
+**今日成果**
+- 手写 LayerNorm（dim=-1 归一化每个 token）+ FFN（两层 MLP + ReLU，升维 4→8 再降维）
+- 组装完整 Transformer 块：位置编码 → 注意力子层（残差+LN）→ FFN 子层（残差+LN）
+- 3 TODO 全对
+
+**核心概念（问到根）**
+- 注意力 = 「横向」token 间交换信息，FFN = 「纵向」每个 token 独立加工（开会交流 vs 会后各自记笔记）
+- LayerNorm = 音量统一器，把每个 token 的特征归一化到均值 0、方差 1
+- 完整块 = 两个子层，各带「残差 + LayerNorm」
+
+**深挖补充**
+- LayerNorm vs BatchNorm：LN 按行（跨特征）归一化，BN 按列（跨 batch）归一化；Transformer 用 LN 因序列长度可变、不依赖 batch、训练推理行为一致
+- γ、β 可学习参数（今天脚本里简化省略了）
+- 残差 x + F(x)：学「增量」不是「全量」（抄作业改错类比）
+- 残差保护梯度的机制：dy/dx = 1 + F'(x)，那个「1」只在「对输入的导数」里（传给浅层），不影响参数更新（dy/dW = dF/dW，因为 d(x)/dW = 0）
+
+**下一步**
+- Day 44：ViT（视觉 Transformer）——把图像切成 patch 当「词」，补上感知这条腿（Transformer 已通关）
 
 ---
 
