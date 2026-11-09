@@ -40,7 +40,7 @@
 
 ### Phase 5 · 具身智能 + 机器人（冲刺方向，对齐目标导师）▶ 进行中（Day 39 起航）
 - [x] Transformer 地基 ✅ Day 39–43（自注意力 + QKV 投影 + 多头注意力 + 位置编码 + FFN + LayerNorm）—— 完整 Transformer 块通关
-- [ ] ViT（视觉 Transformer）—— 感知这条腿
+- [x] ViT（视觉 Transformer）—— 感知这条腿 ✅ Day 44（图→patch→token→[CLS] 完整管线）
 - [ ] 世界模型（World Model）—— 呼应 Day 13 读的那篇具身智能综述
 - [ ] 强化学习 / 模仿学习 / 机器人学习
 - [ ] sim-to-real（仿真到真实迁移）
@@ -97,6 +97,7 @@
 | 2026-11-05 | Day 41 | Multi-Head Attention（多头注意力） | 约 2h | 已完成 | 3 TODO 全对；2 头并行 + 拼接 + W_o；深挖真实多头三升级（降维不增参/W_o 可学习/头自动分化）；softmax 软性 + 重复叠加 |
 | 2026-11-05 | Day 42 | 位置编码（Positional Encoding） | 约 1.5h | 已完成 | 3 TODO 全对（1 处索引笔误 X_pe[1]→X_pe[2]）；正弦余弦编码；X'=X+PE 让同一词不同位置有不同身份；深挖 sin/cos 三优点 |
 | 2026-11-06 | Day 43 | FFN（前馈 MLP）+ LayerNorm（层归一化）——完整 Transformer 块 | 约 2h | 已完成 | 3 TODO 全对；手写 LN+FFN 组装完整块；深挖 LN vs BN、残差保护梯度机制（dy/dx=1+F' vs dy/dW=dF/dW） |
+| 2026-11-09 | Day 44 | ViT（视觉 Transformer）——把图像切成 patch 当「词」 | 约 2.5h | 已完成 | 3 TODO 全对；手写图→patch→token→[CLS] 完整管线；深挖 unfold/view/线性投影/[CLS]/训练闭环（骨架 vs 参数、交叉熵损失） |
 
 ---
 
@@ -1695,6 +1696,32 @@
 
 **下一步**
 - Day 44：ViT（视觉 Transformer）——把图像切成 patch 当「词」，补上感知这条腿（Transformer 已通关）
+
+---
+
+## Day 44（2026-11-09）· ViT（视觉 Transformer）—— 把图像切成 patch 当「词」
+
+**今日成果**
+- 手写 ViT 完整管线：图像 → 切 patch（unfold）→ 展平 → 线性投影（W_proj）→ [CLS]+位置编码 → Transformer 块 → [CLS] 输出
+- 3 TODO 全对（切 patch / 投影+[CLS]+位置编码 / 取 [CLS] 输出）
+- 用一张 8×8 图（中间 4×4 方块）跑通整条链路，得到「整张图的表示」cls_out
+
+**核心概念（问到根）**
+- ViT 核心：把图像切成 patch 当「词」，图像 = 一句话，patch = 词（An Image is Worth 16x16 Words）
+- 文字 Transformer vs ViT 唯一区别在第一步：分词 vs 切 patch，后面完全复用
+- [CLS] = 汇总员（会议主席）：初始为空，通过注意力对所有 patch 加权求和，最后代表整张图
+- 完整链路：图(8,8) → 切块(2,2,4,4) → 展平(4,16) → 投影(4,8) → [CLS]+PE(5,8) → Transformer块 → [CLS](8,)
+
+**深挖补充**
+- unfold(dim,size,step) = 滑窗切块（今天 step=size 不重叠）；view 的本质 = 内存一维数组重新切段（无视维度语义）
+- 线性投影 = 加权求和：8 维每维 = 16 像素加权和（用 patch0 只有 4 个 1 实际验证 emb[0]=权重之和=-0.5904）
+- X、X1、X2 是同一批 token 的三个阶段：X=原始、X1=注意力横向交换后、X2=FFN 纵向加工后（X2[0]=cls_out）
+- 训练闭环：训练对象 = W_proj/QKV/FFN/LN/[CLS]/PE/分类头；损失 = 交叉熵；对所有这些参数求梯度
+- 骨架 vs 参数：今天只做前向传播（搭骨架），参数随机所以 cls_out 无意义；训练 = 调参数旋钮
+- 「万物皆 token」思想 = 通向世界模型的钥匙（图像/动作/状态都能 token 化）
+
+**下一步**
+- Day 45：世界模型（World Model）——主战场，对齐 Yinghao Xu（XU Lab）；或先补 ViT 训练闭环（真训练一个分类器）
 
 ---
 
